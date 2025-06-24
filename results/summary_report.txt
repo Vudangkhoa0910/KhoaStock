@@ -1,0 +1,19 @@
+KẾT QUẢ PHÂN TÍCH DỮ LIỆU CHỨNG KHOÁN
+=====================================
+
+1. THỐNG KÊ GIAO DỊCH
+-----------------
+                             FPT         VNM         VCB
+Giá trung bình            132.29       61.48       60.57
+Khối lượng TB/phiên   5301497.88  3660697.73  2138301.98
+Biến động giá TB (%)        1.80        1.37        1.26
+Giá cao nhất              156.00       70.57       68.60
+Giá thấp nhất              97.80       49.64       52.00
+Số phiên tăng giá         125.00       98.00      104.00
+Số phiên giảm giá         115.00      129.00      113.00
+
+2. ĐƯỜNG DẪN ĐẾN CÁC KẾT QUẢ
+--------------------------
+- Biểu đồ: results/figures/
+- Bảng số liệu: results/tables/
+- Thống kê: results/statistics/

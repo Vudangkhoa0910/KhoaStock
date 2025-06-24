@@ -1,0 +1,2 @@
+symbol,last_signal,last_close,support_levels,resistance_levels,volume_status,rsi,processed_date
+VNM,Neutral,54.6,"[np.float64(60.27), np.float64(57.95), np.float64(49.64)]","[np.float64(62.79), np.float64(66.12), np.float64(62.48)]",Normal,41.18185429283068,20250603

@@ -1,0 +1,11 @@
+,id,sub_organ_code,ownership_percent,organ_name,type
+0,23042392,10796,0.3043,Công ty Cổ phần Công nghệ HOMA,công ty con
+1,23042393,12292,1.0,Công ty TNHH FPT Digital,công ty con
+2,23042394,FISC,1.0,Công ty TNHH FPT IS,công ty con
+3,23042395,FPTE,1.0,Công ty TNHH Giáo Dục FPT,công ty con
+4,23042396,FPTSC,1.0,Công ty TNHH Phần Mềm FPT,công ty con
+5,23042397,FPTSMART,1.0,Công ty TNHH FPT Smart Cloud,công ty con
+6,23042398,FTEL,0.4566,Công ty Cổ phần Viễn thông FPT,công ty con
+0,23042399,FPTR,0.4654,Công ty Cổ phần Bán lẻ Kỹ thuật số FPT,công ty liên kết
+1,23042400,FPTS,0.1758,Công ty Cổ phần Chứng khoán FPT,công ty liên kết
+2,23042401,SYNNEXFPT,0.48,Công ty Cổ Phần Synnex FPT,công ty liên kết

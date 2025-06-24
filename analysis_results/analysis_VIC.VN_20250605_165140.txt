@@ -1,0 +1,113 @@
+PHÂN TÍCH DỮ LIỆU CHỨNG KHOÁN
+Thời gian phân tích: 2025-06-05 16:51:40
+Mã chứng khoán: VIC.VN
+Khoảng thời gian: 1y
+==================================================
+
+Đang tải dữ liệu cho mã VIC.VN...
+Đã lưu dữ liệu gốc vào file: analysis_results/data_VIC.VN_20250605_165140.csv
+
+
+1. THÔNG TIN CƠ BẢN VỀ BỘ DỮ LIỆU:
+--------------------------------------------------
+Số lượng bản ghi: 247
+Khoảng thời gian: từ 2024-06-05 đến 2025-06-05
+Tần suất dữ liệu: Không xác định
+
+2. MÔ TẢ THỐNG KÊ:
+--------------------------------------------------
+               Open          High           Low        Close        Volume  Dividends  Stock Splits
+count    247.000000    247.000000    247.000000    247.00000  2.470000e+02      247.0         247.0
+mean   48293.117409  49039.271255  47687.854251  48395.14170  6.254554e+06        0.0           0.0
+std    14528.949696  15186.099505  13946.991482  14743.59778  7.522292e+06        0.0           0.0
+min    39700.000000  40100.000000  39700.000000  39900.00000  6.702000e+05        0.0           0.0
+25%    40750.000000  41025.000000  40550.000000  40700.00000  2.013550e+06        0.0           0.0
+50%    41700.000000  42200.000000  41350.000000  41600.00000  3.975500e+06        0.0           0.0
+75%    44950.000000  45650.000000  44400.000000  44850.00000  7.651750e+06        0.0           0.0
+max    98700.000000  99800.000000  96400.000000  98400.00000  7.293885e+07        0.0           0.0
+
+3. KIỂM TRA GIÁ TRỊ NULL:
+--------------------------------------------------
+Không có giá trị null
+
+4. PHÂN TÍCH BIẾN ĐỘNG:
+--------------------------------------------------
+Độ biến động năm: 32.81%
+Skewness (độ lệch): 0.90
+Kurtosis (độ nhọn): 4.65
+Thay đổi giá trong kỳ: 121.72%
+
+5. PHÂN TÍCH KHỐI LƯỢNG GIAO DỊCH:
+--------------------------------------------------
+count    2.470000e+02
+mean     6.254554e+06
+std      7.522292e+06
+min      6.702000e+05
+25%      2.013550e+06
+50%      3.975500e+06
+75%      7.651750e+06
+max      7.293885e+07
+
+Khối lượng giao dịch trung bình: 6,254,554
+
+6. CẤU TRÚC DỮ LIỆU CHI TIẾT:
+--------------------------------------------------
+
+Open:
+- Kiểu dữ liệu: float64
+- Giá trị min: 39,700.00
+- Giá trị max: 98,700.00
+- Giá trị trung bình: 48,293.12
+- Độ lệch chuẩn: 14,528.95
+
+High:
+- Kiểu dữ liệu: float64
+- Giá trị min: 40,100.00
+- Giá trị max: 99,800.00
+- Giá trị trung bình: 49,039.27
+- Độ lệch chuẩn: 15,186.10
+
+Low:
+- Kiểu dữ liệu: float64
+- Giá trị min: 39,700.00
+- Giá trị max: 96,400.00
+- Giá trị trung bình: 47,687.85
+- Độ lệch chuẩn: 13,946.99
+
+Close:
+- Kiểu dữ liệu: float64
+- Giá trị min: 39,900.00
+- Giá trị max: 98,400.00
+- Giá trị trung bình: 48,395.14
+- Độ lệch chuẩn: 14,743.60
+
+Volume:
+- Kiểu dữ liệu: int64
+- Giá trị min: 670,200.00
+- Giá trị max: 72,938,850.00
+- Giá trị trung bình: 6,254,553.66
+- Độ lệch chuẩn: 7,522,292.01
+
+Dividends:
+- Kiểu dữ liệu: float64
+- Giá trị min: 0.00
+- Giá trị max: 0.00
+- Giá trị trung bình: 0.00
+- Độ lệch chuẩn: 0.00
+
+Stock Splits:
+- Kiểu dữ liệu: float64
+- Giá trị min: 0.00
+- Giá trị max: 0.00
+- Giá trị trung bình: 0.00
+- Độ lệch chuẩn: 0.00
+
+Daily_Return:
+- Kiểu dữ liệu: float64
+- Giá trị min: -0.07
+- Giá trị max: 0.07
+- Giá trị trung bình: 0.00
+- Độ lệch chuẩn: 0.02
+
+==================================================
+Phân tích hoàn tất thành công!
