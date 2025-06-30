@@ -12,7 +12,6 @@ from scipy import stats
 import json
 
 class NumpyEncoder(json.JSONEncoder):
-    """ Custom encoder for numpy data types """
     def default(self, obj):
         if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
                           np.int16, np.int32, np.int64, np.uint8,
@@ -26,11 +25,8 @@ class NumpyEncoder(json.JSONEncoder):
 
 class StockDataExplorer:
     def __init__(self, collected_data_dir: str = None, processed_data_dir: str = None):
-        """Khởi tạo explorer với đường dẫn đến dữ liệu"""
-        # Thiết lập logging
         self.setup_logging()
         
-        # Thiết lập đường dẫn
         if collected_data_dir is None or processed_data_dir is None:
             current_dir = Path(__file__).parent.parent
             self.collected_dir = current_dir / "collected_data"
@@ -39,19 +35,16 @@ class StockDataExplorer:
             self.collected_dir = Path(collected_data_dir)
             self.processed_dir = Path(processed_data_dir)
             
-        # Thiết lập style cho visualizations
         plt.style.use('seaborn-v0_8')
         sns.set_palette("husl")
         
     def setup_logging(self):
-        """Thiết lập logging"""
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
 
     def load_daily_data(self, symbol: str) -> Optional[pd.DataFrame]:
-        """Load dữ liệu giao dịch hàng ngày"""
         try:
             daily_files = list(self.collected_dir.glob(f"daily/{symbol}_daily*.csv"))
             if not daily_files:
@@ -65,7 +58,6 @@ class StockDataExplorer:
             return None
 
     def load_processed_signals(self, symbol: str) -> Optional[pd.DataFrame]:
-        """Load dữ liệu tín hiệu đã xử lý"""
         try:
             signal_files = list(self.processed_dir.glob(f"swing_signals/{symbol}_swing_signals*.csv"))
             if not signal_files:
@@ -77,7 +69,6 @@ class StockDataExplorer:
             return None
 
     def analyze_price_distribution(self, symbol: str) -> Dict:
-        """Phân tích phân phối giá"""
         df = self.load_daily_data(symbol)
         if df is None:
             return {}
@@ -102,7 +93,6 @@ class StockDataExplorer:
         return price_stats
 
     def analyze_volume_patterns(self, symbol: str) -> Dict:
-        """Phân tích mẫu khối lượng giao dịch"""
         df = self.load_daily_data(symbol)
         if df is None:
             return {}
@@ -116,7 +106,6 @@ class StockDataExplorer:
             'min_volume': df['volume'].min()
         }
         
-        # Vẽ biểu đồ volume theo thời gian
         plt.figure(figsize=(12, 6))
         plt.plot(df['time'], df['volume'])
         plt.title(f'Khối lượng giao dịch theo thời gian của {symbol}')
@@ -127,7 +116,6 @@ class StockDataExplorer:
         return volume_stats
 
     def analyze_price_momentum(self, symbol: str) -> Dict:
-        """Phân tích momentum của giá"""
         signals_df = self.load_processed_signals(symbol)
         if signals_df is None:
             return {}
@@ -140,7 +128,6 @@ class StockDataExplorer:
             'negative_macd_periods': len(signals_df[signals_df['macd'] < 0])
         }
         
-        # Vẽ biểu đồ RSI và MACD
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
         
         ax1.plot(signals_df.index, signals_df['rsi'])
@@ -159,12 +146,10 @@ class StockDataExplorer:
         return momentum_stats
 
     def analyze_support_resistance(self, symbol: str) -> Dict:
-        """Phân tích các mức hỗ trợ/kháng cự"""
         df = self.load_daily_data(symbol)
         if df is None:
             return {}
             
-        # Tìm các mức giá quan trọng
         price_levels = pd.qcut(df['close'], q=10)
         level_stats = price_levels.value_counts().sort_index()
         
@@ -176,7 +161,6 @@ class StockDataExplorer:
             'most_traded_range': f"{level_stats.index[level_stats.argmax()].left:.2f} - {level_stats.index[level_stats.argmax()].right:.2f}"
         }
         
-        # Vẽ biểu đồ phân phối giá với các mức
         plt.figure(figsize=(12, 6))
         sns.histplot(data=df, x='close', bins=50)
         plt.axvline(x=support_resistance['strong_support'], color='g', linestyle='--', label='Strong Support')
@@ -189,7 +173,6 @@ class StockDataExplorer:
         return support_resistance
 
     def analyze_signal_distribution(self, symbol: str) -> Dict:
-        """Phân tích phân phối tín hiệu giao dịch"""
         signals_df = self.load_processed_signals(symbol)
         if signals_df is None:
             return {}
@@ -203,7 +186,6 @@ class StockDataExplorer:
             'signal_distribution': signal_counts.to_dict()
         }
         
-        # Vẽ biểu đồ phân phối tín hiệu
         plt.figure(figsize=(10, 6))
         signal_counts.plot(kind='bar')
         plt.title(f'Phân phối tín hiệu giao dịch của {symbol}')
@@ -214,7 +196,6 @@ class StockDataExplorer:
         return signal_stats
 
     def analyze_correlation_matrix(self, symbols: List[str]) -> Optional[pd.DataFrame]:
-        """Phân tích tương quan giữa các mã"""
         price_data = {}
         for symbol in symbols:
             df = self.load_daily_data(symbol)
@@ -224,11 +205,9 @@ class StockDataExplorer:
         if not price_data:
             return None
             
-        # Tạo ma trận tương quan
         price_df = pd.DataFrame(price_data)
         corr_matrix = price_df.corr()
         
-        # Vẽ heatmap tương quan
         plt.figure(figsize=(10, 8))
         sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0)
         plt.title('Ma trận tương quan giữa các mã')
@@ -238,7 +217,6 @@ class StockDataExplorer:
         return corr_matrix
 
     def generate_summary_report(self, symbols: List[str]) -> Dict:
-        """Tạo báo cáo tổng hợp cho nhiều mã"""
         report = {}
         for symbol in symbols:
             symbol_report = {
@@ -250,16 +228,13 @@ class StockDataExplorer:
             }
             report[symbol] = symbol_report
             
-        # Thêm phân tích tương quan
         corr_matrix = self.analyze_correlation_matrix(symbols)
         if corr_matrix is not None:
             report['correlation'] = corr_matrix.to_dict()
         
-        # Tạo thư mục analysis nếu chưa tồn tại
         analysis_dir = self.processed_dir / "analysis"
         analysis_dir.mkdir(exist_ok=True)
         
-        # Lưu báo cáo
         current_date = datetime.now().strftime("%Y%m%d")
         report_file = analysis_dir / f"market_analysis_{current_date}.json"
         
@@ -269,20 +244,15 @@ class StockDataExplorer:
         return report
 
 def main():
-    # Khởi tạo explorer
     explorer = StockDataExplorer()
     
-    # Danh sách mã cần phân tích
     symbols = ['VCB', 'VNM', 'FPT']
     
-    # Tạo thư mục analysis nếu chưa tồn tại
     analysis_dir = explorer.processed_dir / "analysis"
     analysis_dir.mkdir(exist_ok=True)
     
-    # Tạo báo cáo phân tích
     report = explorer.generate_summary_report(symbols)
     
-    # In kết quả tổng quan
     for symbol in symbols:
         if symbol in report:
             logging.info(f"\nPhân tích cho {symbol}:")
