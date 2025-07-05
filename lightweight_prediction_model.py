@@ -1,29 +1,25 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
+# Author: Vu Dang Khoa
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datetime import datetime, timedelta
+from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression, Ridge
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.model_selection import train_test_split, TimeSeriesSplit
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import joblib
 
 import plotly.graph_objects as go
-import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.offline as pyo
 pyo.init_notebook_mode()
 
-class LightweightStockPredictor:
-    
+class ModelManager:
     def __init__(self, symbols=['VCB', 'VNM', 'FPT']):
         self.symbols = symbols
         self.models = {}
@@ -33,7 +29,7 @@ class LightweightStockPredictor:
         self.feature_importance = {}
         
     def load_data(self, data_path="/Users/vudangkhoa/Working/KhoaStock/data/collected_data"):
-        print("📊 Đang tải dữ liệu...")
+        print("Loading market data...")
         
         for symbol in self.symbols:
             try:
@@ -57,10 +53,10 @@ class LightweightStockPredictor:
                 merged_data = merged_data.drop(columns=cols_to_drop)
                 
                 self.data[symbol] = merged_data
-                print(f"✅ Đã tải {len(merged_data)} dòng dữ liệu cho {symbol}")
+                print(f"Loaded {len(merged_data)} rows for {symbol}")
                 
             except Exception as e:
-                print(f"❌ Lỗi khi tải dữ liệu {symbol}: {str(e)}")
+                print(f"Error loading {symbol}: {str(e)}")
     
     def create_features(self, df):
         features_df = df.copy()
@@ -125,7 +121,7 @@ class LightweightStockPredictor:
         return available_features
     
     def train_model(self, symbol):
-        print(f"\n🤖 Đang huấn luyện mô hình cho {symbol}...")
+        print(f"\nTraining model for {symbol}...")
         
         df = self.data[symbol].copy()
         df = self.create_features(df)
@@ -135,7 +131,7 @@ class LightweightStockPredictor:
         df_clean = df[feature_columns + ['target_price_change']].dropna()
         
         if len(df_clean) < 50:
-            print(f"❌ Không đủ dữ liệu để huấn luyện {symbol}")
+            print(f"Insufficient data for {symbol}")
             return False
         
         X = df_clean[feature_columns]
@@ -161,11 +157,8 @@ class LightweightStockPredictor:
         
         for name, model in models_to_try.items():
             model.fit(X_train_scaled, y_train)
-            
             y_pred = model.predict(X_test_scaled)
-            
             mse = mean_squared_error(y_test, y_pred)
-            
             print(f"  {name}: MSE = {mse:.6f}")
             
             if mse < best_score:
@@ -192,23 +185,23 @@ class LightweightStockPredictor:
         if hasattr(best_model, 'feature_importances_'):
             self.feature_importance[symbol] = dict(zip(feature_columns, best_model.feature_importances_))
         
-        print(f"✅ Hoàn thành huấn luyện {symbol} với {best_model_name}")
-        print(f"   MSE: {best_score:.6f}, MAE: {self.predictions[symbol]['test_mae']:.6f}, R²: {self.predictions[symbol]['test_r2']:.4f}")
+        print(f"Training completed for {symbol} using {best_model_name}")
+        print(f"MSE: {best_score:.6f}, MAE: {self.predictions[symbol]['test_mae']:.6f}, R²: {self.predictions[symbol]['test_r2']:.4f}")
         
         return True
     
     def train_all_models(self):
-        print("🚀 Bắt đầu huấn luyện mô hình cho tất cả các mã...")
+        print("Starting model training...")
         
         for symbol in self.symbols:
             if symbol in self.data:
                 self.train_model(symbol)
             else:
-                print(f"❌ Không có dữ liệu cho {symbol}")
+                print(f"No data found for {symbol}")
     
     def predict_next_day(self, symbol, days_ahead=1):
         if symbol not in self.models:
-            print(f"❌ Chưa có mô hình cho {symbol}")
+            print(f"No model found for {symbol}")
             return None
         
         df = self.data[symbol].copy()
@@ -220,7 +213,7 @@ class LightweightStockPredictor:
         X_latest = latest_data[feature_columns]
         
         if X_latest.isnull().any().any():
-            print(f"⚠️ Có giá trị null trong dữ liệu mới nhất của {symbol}")
+            print(f"Warning: Missing values in latest data for {symbol}")
             X_latest = X_latest.fillna(method='ffill').fillna(0)
         
         X_latest_scaled = self.scalers[symbol].transform(X_latest)
@@ -247,7 +240,7 @@ class LightweightStockPredictor:
             joblib.dump(self.models[symbol], model_file)
             joblib.dump(self.scalers[symbol], scaler_file)
             
-        print(f"💾 Đã lưu mô hình tại {save_path}")
+        print(f"Models saved to {save_path}")
     
     def load_models(self, load_path="models"):
         import os
@@ -259,18 +252,18 @@ class LightweightStockPredictor:
             if os.path.exists(model_file) and os.path.exists(scaler_file):
                 self.models[symbol] = joblib.load(model_file)
                 self.scalers[symbol] = joblib.load(scaler_file)
-                print(f"📂 Đã tải mô hình {symbol}")
+                print(f"Loaded model for {symbol}")
     
     def plot_prediction_results(self):
         n_symbols = len(self.predictions)
         if n_symbols == 0:
-            print("❌ Không có kết quả dự báo để vẽ")
+            print("No prediction results to plot")
             return
         
         fig = make_subplots(
             rows=n_symbols, cols=2,
-            subplot_titles=[f'{symbol} - Dự báo vs Thực tế' for symbol in self.predictions.keys()] + 
-                          [f'{symbol} - Sai số' for symbol in self.predictions.keys()],
+            subplot_titles=[f'{symbol} - Predictions vs Actual' for symbol in self.predictions.keys()] + 
+                          [f'{symbol} - Errors' for symbol in self.predictions.keys()],
             vertical_spacing=0.08
         )
         
@@ -284,7 +277,7 @@ class LightweightStockPredictor:
                 go.Scatter(
                     x=list(range(len(pred_data['y_true']))),
                     y=pred_data['y_true'],
-                    name=f'{symbol} Thực tế',
+                    name=f'{symbol} Actual',
                     line=dict(color=color),
                     legendgroup=f'group{idx}'
                 ),
@@ -295,7 +288,7 @@ class LightweightStockPredictor:
                 go.Scatter(
                     x=list(range(len(pred_data['y_pred']))),
                     y=pred_data['y_pred'],
-                    name=f'{symbol} Dự báo',
+                    name=f'{symbol} Predicted',
                     line=dict(color=color, dash='dash'),
                     legendgroup=f'group{idx}'
                 ),
@@ -307,7 +300,7 @@ class LightweightStockPredictor:
                 go.Scatter(
                     x=list(range(len(errors))),
                     y=errors,
-                    name=f'{symbol} Sai số',
+                    name=f'{symbol} Error',
                     line=dict(color=color),
                     legendgroup=f'group{idx}',
                     showlegend=False
@@ -319,27 +312,26 @@ class LightweightStockPredictor:
         
         fig.update_layout(
             height=300 * n_symbols,
-            title_text="Kết Quả Dự Báo Mô Hình",
+            title_text="Model Prediction Results",
             showlegend=True
         )
         
         fig.show()
-        
         fig.write_html("prediction_results.html")
-        print("📊 Đã lưu biểu đồ dự báo tại prediction_results.html")
+        print("Prediction plots saved to prediction_results.html")
     
     def plot_error_analysis(self):
         if not self.predictions:
-            print("❌ Không có dữ liệu dự báo để phân tích")
+            print("No prediction data for analysis")
             return
         
         fig = make_subplots(
             rows=2, cols=2,
             subplot_titles=[
-                'Histogram Phân Phối Sai Số',
-                'Scatter Plot: Dự báo vs Thực tế', 
-                'Độ Chính Xác Theo Thời Gian',
-                'Phân Phối R² Score'
+                'Error Distribution',
+                'Predictions vs Actual', 
+                'Performance Over Time',
+                'R² Score Distribution'
             ]
         )
         
@@ -432,72 +424,66 @@ class LightweightStockPredictor:
         
         fig.update_layout(
             height=800,
-            title_text="Phân Tích Sai Số Chi Tiết",
+            title_text="Detailed Error Analysis",
             showlegend=True
         )
         
         fig.show()
         fig.write_html("error_analysis.html")
-        print("📊 Đã lưu phân tích sai số tại error_analysis.html")
+        print("Error analysis plots saved to error_analysis.html")
     
     def print_model_summary(self):
-        print("\n" + "="*60)
-        print("📋 TÓM TẮT KẾT QUẢ MÔ HÌNH DỰ BÁO")
+        print("\nMODEL PREDICTION SUMMARY")
         print("="*60)
         
         if not self.predictions:
-            print("❌ Không có kết quả dự báo")
+            print("No prediction results")
             return
         
         for symbol, pred_data in self.predictions.items():
-            print(f"\n🏢 {symbol}:")
-            print(f"   Model: {pred_data['model_name']}")
-            print(f"   MSE: {pred_data['test_mse']:.6f}")
-            print(f"   MAE: {pred_data['test_mae']:.6f}")
-            print(f"   R²: {pred_data['test_r2']:.4f}")
-            print(f"   Số điểm test: {len(pred_data['y_true'])}")
+            print(f"\nResults for {symbol}:")
+            print(f"Model: {pred_data['model_name']}")
+            print(f"MSE: {pred_data['test_mse']:.6f}")
+            print(f"MAE: {pred_data['test_mae']:.6f}")
+            print(f"R²: {pred_data['test_r2']:.4f}")
+            print(f"Test samples: {len(pred_data['y_true'])}")
             
             y_true_direction = np.sign(pred_data['y_true'])
             y_pred_direction = np.sign(pred_data['y_pred'])
             direction_accuracy = np.mean(y_true_direction == y_pred_direction) * 100
-            print(f"   Độ chính xác chiều: {direction_accuracy:.1f}%")
+            print(f"Direction accuracy: {direction_accuracy:.1f}%")
         
         print("\n" + "="*60)
         
-        print("🔮 DỰ BÁO NGÀY TIẾP THEO:")
+        print("NEXT DAY PREDICTIONS:")
         print("="*60)
         
         for symbol in self.symbols:
             if symbol in self.models:
                 prediction = self.predict_next_day(symbol)
                 if prediction:
-                    print(f"\n📈 {symbol}:")
-                    print(f"   Giá hiện tại: {prediction['current_price']:.2f}")
-                    print(f"   Dự báo thay đổi: {prediction['predicted_change']:.4f} ({prediction['predicted_change']*100:.2f}%)")
-                    print(f"   Giá dự báo: {prediction['predicted_price']:.2f}")
-                    direction = "📈 TĂNG" if prediction['predicted_change'] > 0 else "📉 GIẢM"
-                    print(f"   Xu hướng: {direction}")
+                    print(f"\n{symbol}:")
+                    print(f"Current price: {prediction['current_price']:.2f}")
+                    print(f"Predicted change: {prediction['predicted_change']:.4f} ({prediction['predicted_change']*100:.2f}%)")
+                    print(f"Predicted price: {prediction['predicted_price']:.2f}")
 
 
 def main():
-    print("🚀 KHỞI ĐỘNG MÔ HÌNH DỰ BÁO CHỨNG KHOÁN NHẸ")
+    print("Starting Lightweight Stock Prediction Model")
     print("=" * 60)
     
-    predictor = LightweightStockPredictor(['VCB', 'VNM', 'FPT'])
+    predictor = ModelManager(['VCB', 'VNM', 'FPT'])
     
     predictor.load_data()
-    
     predictor.train_all_models()
-    
     predictor.save_models()
-    
     predictor.print_model_summary()
     
-    print("\n📊 Đang tạo biểu đồ phân tích...")
+    print("\nGenerating analysis plots...")
     predictor.plot_prediction_results()
     predictor.plot_error_analysis()
     
-    print("\n✅ HOÀN THÀNH! Kiểm tra các file HTML đã được tạo.")
+    print("\nProcess completed! Check the generated HTML files.")
     
     return predictor
 

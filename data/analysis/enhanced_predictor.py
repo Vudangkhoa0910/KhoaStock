@@ -1,3 +1,4 @@
+# Author: Vu Dang Khoa
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -14,15 +15,24 @@ import re
 
 class EnhancedStockPredictor:
     def __init__(self, collected_data_dir: str = None, processed_data_dir: str = None):
-        self.setup_logging()
-        if collected_data_dir is None or processed_data_dir is None:
-            current_dir = Path(__file__).parent.parent
-            self.collected_dir = current_dir / "collected_data"
-            self.processed_dir = current_dir / "processed_data"
-        else:
-            self.collected_dir = Path(collected_data_dir)
-            self.processed_dir = Path(processed_data_dir)
+        self._init_base()
+        self._setup_dirs(collected_data_dir, processed_data_dir)
+        self._init_model()
+        
+    def _init_base(self):
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
         self.scaler = StandardScaler()
+
+    def _setup_dirs(self, collected_data_dir, processed_data_dir):
+        if not collected_data_dir or not processed_data_dir:
+            root = Path(__file__).parent.parent
+            self.collected_dir = root / "collected_data"
+            self.processed_dir = root / "processed_data"
+            return
+        self.collected_dir = Path(collected_data_dir)
+        self.processed_dir = Path(processed_data_dir)
+
+    def _init_model(self):
         self.model_params = {
             'objective': 'binary',
             'metric': 'binary_logloss',
@@ -39,59 +49,57 @@ class EnhancedStockPredictor:
             'num_iterations': 100
         }
 
-    def setup_logging(self):
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s'
-        )
-
-    def load_trading_stats(self, symbol: str) -> pd.DataFrame:
+    def get_trading_stats(self, symbol: str) -> pd.DataFrame:
         try:
-            stats_file = list(self.collected_dir.glob(f"trading_stats/{symbol}_trading_stats*.csv"))[-1]
-            return pd.read_csv(stats_file)
+            file = list(self.collected_dir.glob(f"trading_stats/{symbol}_trading_stats*.csv"))[-1]
+            return pd.read_csv(file)
         except Exception as e:
-            logging.warning(f"Không thể load trading stats cho {symbol}: {str(e)}")
+            logging.warning(f"Failed to load trading stats for {symbol}: {str(e)}")
             return pd.DataFrame()
 
-    def load_fundamental_data(self, symbol: str) -> Dict[str, pd.DataFrame]:
-        fundamental_data = {}
+    def get_fundamentals(self, symbol: str) -> Dict[str, pd.DataFrame]:
+        data = {}
         try:
-            for report_type in ['balance', 'income', 'cashflow', 'ratios']:
-                file_path = self.collected_dir / f"fundamental/{symbol}_{report_type}.csv"
-                if file_path.exists():
-                    fundamental_data[report_type] = pd.read_csv(file_path)
-            return fundamental_data
+            for report in ['balance', 'income', 'cashflow', 'ratios']:
+                path = self.collected_dir / f"fundamental/{symbol}_{report}.csv"
+                if path.exists():
+                    data[report] = pd.read_csv(path)
+            return data
         except Exception as e:
-            logging.warning(f"Không thể load fundamental data cho {symbol}: {str(e)}")
+            logging.warning(f"Failed to load fundamentals for {symbol}: {str(e)}")
             return {}
 
-    def calculate_sentiment_score(self, text: str) -> float:
+    def calc_sentiment(self, text: str) -> float:
+        if pd.isna(text):
+            return 0.0
         try:
-            if pd.isna(text):
-                return 0.0
-            blob = TextBlob(text)
-            return blob.sentiment.polarity
+            return TextBlob(text).sentiment.polarity
         except:
             return 0.0
 
-    def load_news_data(self, symbol: str) -> pd.DataFrame:
+    def get_news(self, symbol: str) -> pd.DataFrame:
         try:
-            news_data = []
-            for news_type in ['news', 'events', 'reports']:
-                file_path = self.collected_dir / f"news/{symbol}_{news_type}.csv"
-                if file_path.exists():
-                    df = pd.read_csv(file_path)
-                    if 'news_title' in df.columns:
-                        df['sentiment'] = df['news_title'].apply(self.calculate_sentiment_score)
-                        news_data.append(df)
-            if news_data:
-                combined_news = pd.concat(news_data, ignore_index=True)
-                combined_news = combined_news.dropna(subset=['sentiment'])
-                if len(combined_news) > 0:
-                    return combined_news
-            return pd.DataFrame({'sentiment': [0.0]})
+            news = []
+            for type in ['news', 'events', 'reports']:
+                path = self.collected_dir / f"news/{symbol}_{type}.csv"
+                if not path.exists():
+                    continue
+                    
+                df = pd.read_csv(path)
+                if 'news_title' not in df.columns:
+                    continue
+                    
+                df['sentiment'] = df['news_title'].apply(self.calc_sentiment)
+                news.append(df)
+                
+            if not news:
+                return pd.DataFrame({'sentiment': [0.0]})
+                
+            combined = pd.concat(news, ignore_index=True)
+            return combined.dropna(subset=['sentiment']) if len(combined) else pd.DataFrame({'sentiment': [0.0]})
+            
         except Exception as e:
-            logging.warning(f"Không thể load news data cho {symbol}: {str(e)}")
+            logging.warning(f"Failed to load news for {symbol}: {str(e)}")
             return pd.DataFrame({'sentiment': [0.0]})
 
     def calculate_fundamental_features(self, fundamental_data: Dict[str, pd.DataFrame]) -> Dict:
@@ -150,9 +158,9 @@ class EnhancedStockPredictor:
         try:
             df = df.sort_values('time').reset_index(drop=True)
             df['target'] = np.where(df['close'].shift(-1) > df['close'], 1, 0)
-            trading_stats = self.load_trading_stats(symbol)
-            fundamental_data = self.load_fundamental_data(symbol)
-            news_data = self.load_news_data(symbol)
+            trading_stats = self.get_trading_stats(symbol)
+            fundamental_data = self.get_fundamentals(symbol)
+            news_data = self.get_news(symbol)
             fundamental_features = self.calculate_fundamental_features(fundamental_data)
             feature_sets = {
                 'price_momentum': [
@@ -270,9 +278,9 @@ class EnhancedStockPredictor:
             min_lookback = max(lookback_days, 50)
             df = df.tail(min_lookback)
             df = self.calculate_technical_indicators(df)
-            trading_stats = self.load_trading_stats(symbol)
-            fundamental_data = self.load_fundamental_data(symbol)
-            news_data = self.load_news_data(symbol)
+            trading_stats = self.get_trading_stats(symbol)
+            fundamental_data = self.get_fundamentals(symbol)
+            news_data = self.get_news(symbol)
             fundamental_features = self.calculate_fundamental_features(fundamental_data)
             df['trend_signal'] = np.where(df['SMA_5'] > df['SMA_20'], 1, 0)
             df['macd_signal'] = np.where(df['MACD'] > df['Signal_Line'], 1, 0)

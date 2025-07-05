@@ -1,3 +1,4 @@
+# Author: Vu Dang Khoa
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -8,11 +9,9 @@ import json
 from datetime import datetime, timedelta
 import os
 from pathlib import Path
-from PIL import Image
 
 st.set_page_config(
-    page_title="Phân Tích Chứng Khoán",
-    page_icon="📈",
+    page_title="Stock Analysis Dashboard",
     layout="wide"
 )
 
@@ -21,13 +20,9 @@ COLLECTED_DATA_DIR = ROOT_DIR / "data" / "collected_data"
 
 st.markdown("""
 <style>
-    .main {
-        padding: 0rem 1rem;
-    }
-    .stProgress > div > div > div > div {
-        background-color: #1c4b27;
-    }
-    .stAlert > div {
+    .main { padding: 0rem 1rem; }
+    .stProgress > div > div > div > div { background-color: #1c4b27; }
+    .stAlert > div { 
         padding: 0.5rem 1rem;
         margin-bottom: 0.5rem;
     }
@@ -36,19 +31,12 @@ st.markdown("""
         color: white;
         padding: 1rem;
     }
-    div[data-testid="stSidebarNav"] > ul {
-        padding-left: 1.5rem;
-    }
+    div[data-testid="stSidebarNav"] > ul { padding-left: 1.5rem; }
     .stock-metrics {
         background-color: #f0f2f6;
         padding: 1rem;
         border-radius: 0.5rem;
         margin: 0.5rem 0;
-    }
-    .pipeline-step {
-        border-left: 3px solid #2e7d32;
-        padding-left: 1rem;
-        margin: 1rem 0;
     }
     .market-data {
         background-color: #ffffff;
@@ -57,14 +45,8 @@ st.markdown("""
         padding: 1rem;
         margin: 0.5rem 0;
     }
-    .price-up {
-        color: #2e7d32;
-        font-weight: bold;
-    }
-    .price-down {
-        color: #c62828;
-        font-weight: bold;
-    }
+    .price-up { color: #2e7d32; font-weight: bold; }
+    .price-down { color: #c62828; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -113,29 +95,29 @@ def format_price(price, ref_price=None):
     color = "price-up" if price > ref_price else "price-down" if price < ref_price else ""
     return f'<span class="{color}">{price:,.0f}</span>'
 
-st.sidebar.title("Quy Trình Phân Tích Chứng Khoán by Vu Dang Khoa")
+st.sidebar.title("Stock Analysis Process")
 st.sidebar.markdown("---")
 STOCK_CODES = ["VCB", "VNM", "FPT"]
-selected_stock = st.sidebar.selectbox("Chọn Mã Chứng Khoán", STOCK_CODES)
+selected_stock = st.sidebar.selectbox("Select Stock Symbol", STOCK_CODES)
 date_range = st.sidebar.date_input(
-    "Chọn Khoảng Thời Gian",
+    "Select Date Range",
     value=(datetime.now() - timedelta(days=365), datetime.now()),
     max_value=datetime.now()
 )
 pipeline_stages = {
-    "Thu Thập Dữ Liệu": ["Dữ Liệu Thị Trường", "Thống Kê Giao Dịch", "Tin Tức", "Cơ Bản"],
-    "Xử Lý Dữ Liệu": ["Chỉ Báo Kỹ Thuật", "Phân Tích Khối Lượng", "Nhận Diện Mẫu Hình"],
-    "Phân Tích Dữ Liệu": ["Phân Tích Giá", "Tạo Tín Hiệu", "Dự Đoán Mô Hình"]
+    "Data Collection": ["Market Data", "Trading Statistics", "News", "Fundamentals"],
+    "Data Processing": ["Technical Indicators", "Volume Analysis", "Pattern Recognition"],
+    "Data Analysis": ["Price Analysis", "Signal Generation", "Model Prediction"]
 }
 st.sidebar.markdown("---")
-st.sidebar.subheader("Tiến Độ Quy Trình")
+st.sidebar.subheader("Pipeline Progress")
 for stage, substages in pipeline_stages.items():
     st.sidebar.markdown(f"**{stage}**")
     for substage in substages:
         progress = np.random.randint(70, 100)
         st.sidebar.text(substage)
         st.sidebar.progress(progress/100)
-st.title("Bảng Điều Khiển Phân Tích Chứng Khoán")
+st.title("Stock Analysis Dashboard")
 market_data = load_market_data()
 trading_stats = load_trading_stats(selected_stock)
 technical_data = load_technical_data(selected_stock)
@@ -145,9 +127,9 @@ if market_data is not None:
     with col1:
         st.markdown("""
         <div class="market-data">
-            <h3>Giá Hiện Tại</h3>
-            <p>Giá: {}</p>
-            <p>Thay đổi: {} ({:.2f}%)</p>
+            <h3>Current Price</h3>
+            <p>Price: {}</p>
+            <p>Change: {} ({:.2f}%)</p>
         </div>
         """.format(
             format_price(stock_data['match_price'], stock_data['ref_price']),
@@ -157,9 +139,9 @@ if market_data is not None:
     with col2:
         st.markdown("""
         <div class="market-data">
-            <h3>Khối Lượng</h3>
-            <p>KL Khớp: {:,.0f}</p>
-            <p>KLGD TB (2W): {:,.0f}</p>
+            <h3>Volume</h3>
+            <p>Matched: {:,.0f}</p>
+            <p>Avg (2W): {:,.0f}</p>
         </div>
         """.format(
             stock_data['accumulated_volume'],
@@ -168,9 +150,9 @@ if market_data is not None:
     with col3:
         st.markdown("""
         <div class="market-data">
-            <h3>Giá Tham Chiếu</h3>
-            <p>Trần: {}</p>
-            <p>Sàn: {}</p>
+            <h3>Reference Price</h3>
+            <p>Ceiling: {}</p>
+            <p>Floor: {}</p>
         </div>
         """.format(
             format_price(stock_data['ceiling']),
@@ -179,23 +161,23 @@ if market_data is not None:
     with col4:
         st.markdown("""
         <div class="market-data">
-            <h3>Room Nước Ngoài</h3>
-            <p>Còn lại: {:,.0f}</p>
-            <p>Tỷ lệ sở hữu: {:.2f}%</p>
+            <h3>Foreign Room</h3>
+            <p>Available: {:,.0f}</p>
+            <p>Ownership: {:.2f}%</p>
         </div>
         """.format(
             stock_data['foreign_room'],
             stock_data['current_holding_ratio'] * 100
         ), unsafe_allow_html=True)
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📥 Thu Thập Dữ Liệu", 
-    "⚙️ Xử Lý Dữ Liệu",
-    "📊 Phân Tích Dữ Liệu",
-    "📈 Phân Tích Tổng Hợp",
-    "🏢 Thông Tin & Tin Tức"
+    "Data Collection",
+    "Data Processing",
+    "Data Analysis",
+    "Comprehensive Analysis",
+    "Information & News"
 ])
 with tab1:
-    st.header("Giai Đoạn Thu Thập Dữ Liệu")
+    st.header("Data Collection Phase")
     if technical_data is not None:
         fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
                           vertical_spacing=0.05,
@@ -217,77 +199,77 @@ with tab1:
         )
         st.plotly_chart(fig, use_container_width=True)
 with tab2:
-    st.header("Giai Đoạn Xử Lý Dữ Liệu")
+    st.header("Data Processing Phase")
     if technical_data is not None:
         technical_data['Price_Change'] = technical_data['Close'].pct_change()
         technical_data['Price_Change_Pct'] = technical_data['Price_Change'] * 100
 
         st.markdown("""
-        ### 🔍 Phương Pháp Xử Lý Dữ Liệu
+        ### Data Processing Methodology
 
-        Dữ liệu được xử lý qua nhiều bước để tạo ra các chỉ báo kỹ thuật và phân tích xu hướng:
+        Data is processed through multiple steps to generate technical indicators and trend analysis:
 
-        #### 1️⃣ Xử Lý Dữ liệu Giá
-        - **Dữ liệu đầu vào**: OHLC (Open, High, Low, Close) và Volume
-        - **Làm sạch dữ liệu**: Loại bỏ các giá trị null và bất thường
-        - **Chuẩn hóa**: Điều chỉnh giá theo các sự kiện doanh nghiệp (nếu có)
+        #### 1. Price Data Processing
+        - **Input Data**: OHLC (Open, High, Low, Close) and Volume
+        - **Data Cleaning**: Remove null and abnormal values
+        - **Normalization**: Adjust prices for corporate events (if any)
 
-        #### 2️⃣ Chỉ Báo Xu Hướng
+        #### 2. Trend Indicators
         - **SMA (Simple Moving Average)**:
-          - SMA20: Trung bình động 20 phiên
-          - SMA50: Trung bình động 50 phiên
-          - *Công thức*: SMA = (P₁ + P₂ + ... + Pₙ) / n
+          - SMA20: 20-period moving average
+          - SMA50: 50-period moving average
+          - *Formula*: SMA = (P₁ + P₂ + ... + Pₙ) / n
 
         - **Bollinger Bands**:
-          - Dải giữa (BB_Mid): SMA 20 phiên
-          - Dải trên (BB_High): BB_Mid + 2 × độ lệch chuẩn
-          - Dải dưới (BB_Low): BB_Mid - 2 × độ lệch chuẩn
+          - Middle Band (BB_Mid): 20-period SMA
+          - Upper Band (BB_High): BB_Mid + 2 × standard deviation
+          - Lower Band (BB_Low): BB_Mid - 2 × standard deviation
 
-        #### 3️⃣ Chỉ Báo Động Lượng
+        #### 3. Momentum Indicators
         - **RSI (Relative Strength Index)**:
-          - Khoảng thời gian: 14 phiên
-          - Vùng quá mua: > 70
-          - Vùng quá bán: < 30
-          - *Công thức*: RSI = 100 - (100 / (1 + RS))
-            - RS = Trung bình tăng / Trung bình giảm
+          - Period: 14
+          - Overbought: > 70
+          - Oversold: < 30
+          - *Formula*: RSI = 100 - (100 / (1 + RS))
+            - RS = Average Gain / Average Loss
 
         - **MACD (Moving Average Convergence Divergence)**:
           - MACD Line: EMA(12) - EMA(26)
-          - Signal Line: EMA(9) của MACD
+          - Signal Line: 9-period EMA of MACD
           - *Histogram*: MACD - Signal
 
-        #### 4️⃣ Chỉ Báo Biến Động
+        #### 4. Volatility Indicators
         - **ATR (Average True Range)**:
-          - Khoảng thời gian: 14 phiên
+          - Period: 14
           - *True Range* = max(H-L, |H-C_prev|, |L-C_prev|)
 
         - **OBV (On Balance Volume)**:
-          - Tích lũy khối lượng theo chiều giá
-          - Tăng khi giá đóng cửa tăng
-          - Giảm khi giá đóng cửa giảm
+          - Accumulates volume based on price direction
+          - Increases when closing price rises
+          - Decreases when closing price falls
         """)
 
-        st.markdown("### 📊 Biểu Đồ Phân Tích Kỹ Thuật")
+        st.markdown("### Technical Analysis Charts")
         
         tech_tab1, tech_tab2, tech_tab3 = st.tabs([
-            "Xu Hướng & Bollinger Bands",
-            "Chỉ Báo Động Lượng",
-            "Biến Động & Khối Lượng"
+            "Trend & Bollinger Bands",
+            "Momentum Indicators",
+            "Volatility & Volume"
         ])
         
         with tech_tab1:
             st.markdown("""
-            #### 📈 Phân Tích Xu Hướng và Bollinger Bands
+            #### Trend and Bollinger Bands Analysis
             
-            - **Đường MA (Moving Average)**: 
-              - MA20 (ngắn hạn) và MA50 (trung hạn) giúp xác định xu hướng
-              - Cắt lên: Tín hiệu tăng giá
-              - Cắt xuống: Tín hiệu giảm giá
+            - **Moving Average (MA)**: 
+              - MA20 (short-term) and MA50 (medium-term) help identify trends
+              - Crossover Up: Bullish signal
+              - Crossover Down: Bearish signal
             
-            - **Dải Bollinger**:
-              - Độ rộng dải thể hiện biến động
-              - Giá chạm dải trên: Có thể quá mua
-              - Giá chạm dải dưới: Có thể quá bán
+            - **Bollinger Bands**:
+              - Band width shows volatility
+              - Price touches upper band: Potential overbought
+              - Price touches lower band: Potential oversold
             """)
             
             fig = make_subplots(rows=2, cols=1, 
@@ -300,7 +282,7 @@ with tab2:
                                         high=technical_data['High'],
                                         low=technical_data['Low'],
                                         close=technical_data['Close'],
-                                        name="Giá"), row=1, col=1)
+                                        name="Price"), row=1, col=1)
             
             fig.add_trace(go.Scatter(x=technical_data['time'],
                                    y=technical_data['SMA_20'],
@@ -333,26 +315,26 @@ with tab2:
                                    name="BB Width (%)",
                                    line=dict(color='purple')), row=2, col=1)
             
-            fig.update_layout(height=800, title="Phân Tích Xu Hướng và Bollinger Bands")
+            fig.update_layout(height=800, title="Trend and Bollinger Bands Analysis")
             st.plotly_chart(fig, use_container_width=True)
 
         with tech_tab2:
             st.markdown("""
-            #### 📊 Phân Tích Động Lượng
+            #### Momentum Analysis
             
             - **RSI (Relative Strength Index)**:
-              - Đo lường tốc độ và độ lớn của biến động giá
-              - RSI > 70: Vùng quá mua
-              - RSI < 30: Vùng quá bán
+              - Measures speed and magnitude of price movements
+              - RSI > 70: Overbought zone
+              - RSI < 30: Oversold zone
             
             - **MACD**:
-              - MACD Line cắt Signal Line lên: Tín hiệu mua
-              - MACD Line cắt Signal Line xuống: Tín hiệu bán
-              - Histogram thể hiện độ mạnh của xu hướng
+              - MACD Line crosses Signal Line up: Buy signal
+              - MACD Line crosses Signal Line down: Sell signal
+              - Histogram shows trend strength
             
             - **Stochastic**:
-              - %K và %D cho biết vị trí giá trong phạm vi giao dịch
-              - Vùng quá mua/bán tương tự RSI
+              - %K and %D show price position within trading range
+              - Overbought/oversold zones similar to RSI
             """)
             
             fig = make_subplots(rows=3, cols=1,
@@ -399,34 +381,34 @@ with tab2:
             fig.add_hline(y=80, line_dash="dash", line_color="red", row=3, col=1)
             fig.add_hline(y=20, line_dash="dash", line_color="green", row=3, col=1)
 
-            fig.update_layout(height=800, title="Phân Tích Động Lượng")
+            fig.update_layout(height=800, title="Momentum Analysis")
             st.plotly_chart(fig, use_container_width=True)
 
         with tech_tab3:
             st.markdown("""
-            #### 📉 Phân Tích Biến Động và Khối Lượng
+            #### Volatility and Volume Analysis
             
             - **ATR (Average True Range)**:
-              - Đo lường biến động giá trung bình
-              - ATR cao: Biến động mạnh
-              - ATR thấp: Biến động yếu
+              - Measures average price volatility
+              - High ATR: Strong volatility
+              - Low ATR: Weak volatility
             
-            - **Khối lượng**:
-              - Khối lượng tăng khi giá tăng: Xác nhận xu hướng tăng
-              - Khối lượng tăng khi giá giảm: Xác nhận xu hướng giảm
-              - Khối lượng thấp: Thiếu sự quan tâm của thị trường
+            - **Volume**:
+              - Volume increases with price rise: Confirms uptrend
+              - Volume increases with price fall: Confirms downtrend
+              - Low volume: Lack of market interest
             
             - **OBV (On Balance Volume)**:
-              - Tích lũy khối lượng theo chiều giá
-              - OBV tăng cùng giá: Xu hướng tăng mạnh
-              - OBV giảm khi giá tăng: Cảnh báo xu hướng yếu
+              - Accumulates volume based on price direction
+              - OBV rises with price: Strong uptrend
+              - OBV falls with rising price: Weak trend warning
             """)
             
             fig = make_subplots(rows=3, cols=1,
                               shared_xaxes=True,
                               vertical_spacing=0.05,
                               row_heights=[0.4, 0.3, 0.3],
-                              subplot_titles=("ATR", "Khối Lượng", "OBV"))
+                              subplot_titles=("ATR", "Volume", "OBV"))
 
             # ATR
             fig.add_trace(go.Scatter(x=technical_data['time'],
@@ -437,7 +419,7 @@ with tab2:
             colors = ['green' if x >= 0 else 'red' for x in technical_data['Price_Change']]
             fig.add_trace(go.Bar(x=technical_data['time'],
                                y=technical_data['Volume'],
-                               name="Khối lượng",
+                               name="Volume",
                                marker_color=colors), row=2, col=1)
 
             # OBV
@@ -446,40 +428,40 @@ with tab2:
                                    name="OBV",
                                    line=dict(color='purple')), row=3, col=1)
 
-            fig.update_layout(height=800, title="Phân Tích Biến Động và Khối Lượng")
+            fig.update_layout(height=800, title="Volatility and Volume Analysis")
             st.plotly_chart(fig, use_container_width=True)
 
         st.markdown("""
-        ### 🎯 Tín Hiệu Giao Dịch
+        ### Trading Signals
         
-        Dựa trên sự kết hợp của các chỉ báo, hệ thống xác định các tín hiệu giao dịch sau:
+        Based on the combination of indicators, the system identifies the following trading signals:
         
-        #### Tín Hiệu Mua:
-        1. RSI < 30 (quá bán)
-        2. Giá chạm/vượt dải dưới Bollinger
-        3. MACD cắt Signal Line từ dưới lên
-        4. Stochastic %K cắt %D từ dưới lên trong vùng quá bán
+        #### Buy Signals:
+        1. RSI < 30 (oversold)
+        2. Price touches/breaks below Bollinger lower band
+        3. MACD crosses above Signal Line
+        4. Stochastic %K crosses above %D in oversold zone
         
-        #### Tín Hiệu Bán:
-        1. RSI > 70 (quá mua)
-        2. Giá chạm/vượt dải trên Bollinger
-        3. MACD cắt Signal Line từ trên xuống
-        4. Stochastic %K cắt %D từ trên xuống trong vùng quá mua
+        #### Sell Signals:
+        1. RSI > 70 (overbought)
+        2. Price touches/breaks above Bollinger upper band
+        3. MACD crosses below Signal Line
+        4. Stochastic %K crosses below %D in overbought zone
         
-        #### Xác Nhận Xu Hướng:
-        - **Xu hướng tăng** được xác nhận khi:
-          - Giá trên MA20 và MA50
-          - OBV tăng cùng chiều giá
-          - Khối lượng tăng trong phiên tăng giá
+        #### Trend Confirmation:
+        - **Uptrend** is confirmed when:
+          - Price above MA20 and MA50
+          - OBV increases with price
+          - Volume increases on up days
         
-        - **Xu hướng giảm** được xác nhận khi:
-          - Giá dưới MA20 và MA50
-          - OBV giảm cùng chiều giá
-          - Khối lượng tăng trong phiên giảm giá
+        - **Downtrend** is confirmed when:
+          - Price below MA20 and MA50
+          - OBV decreases with price
+          - Volume increases on down days
         """)
 
 with tab3:
-    st.header("Giai Đoạn Phân Tích Dữ Liệu")
+    st.header("Data Analysis Phase")
     
     if technical_data is not None:
         latest_data = technical_data.iloc[-1]
@@ -487,21 +469,21 @@ with tab3:
         technical_data['Price_Change'] = technical_data['Close'].pct_change()
         technical_data['Price_Change_Pct'] = technical_data['Price_Change'] * 100
         
-        latest_rsi_signal = 'Quá mua' if latest_data['RSI'] > 70 else 'Quá bán' if latest_data['RSI'] < 30 else 'Trung tính'
-        latest_bb_position = 'Trên dải trên' if latest_data['Close'] > latest_data['BB_High'] else 'Dưới dải dưới' if latest_data['Close'] < latest_data['BB_Low'] else 'Trong dải'
+        latest_rsi_signal = 'Overbought' if latest_data['RSI'] > 70 else 'Oversold' if latest_data['RSI'] < 30 else 'Neutral'
+        latest_bb_position = 'Above upper band' if latest_data['Close'] > latest_data['BB_High'] else 'Below lower band' if latest_data['Close'] < latest_data['BB_Low'] else 'Inside bands'
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            trend = "Tăng" if latest_data['SMA_20'] > latest_data['SMA_50'] else "Giảm"
-            trend_color = "green" if trend == "Tăng" else "red"
+            trend = "Up" if latest_data['SMA_20'] > latest_data['SMA_50'] else "Down"
+            trend_color = "green" if trend == "Up" else "red"
             st.markdown(f"""
             <div class="stock-metrics">
-                <h3>Xu Hướng Giá</h3>
+                <h3>Price Trend</h3>
                 <p>SMA20: {latest_data['SMA_20']:,.2f}</p>
                 <p>SMA50: {latest_data['SMA_50']:,.2f}</p>
-                <p>Xu hướng: <span style="color: {trend_color}; font-weight: bold;">{trend}</span></p>
-                <p>Biến động: {latest_data['ATR']:,.2f} ({(latest_data['ATR']/latest_data['Close']*100):,.2f}%)</p>
+                <p>Trend: <span style="color: {trend_color}; font-weight: bold;">{trend}</span></p>
+                <p>Volatility: {latest_data['ATR']:,.2f} ({(latest_data['ATR']/latest_data['Close']*100):,.2f}%)</p>
             </div>
             """, unsafe_allow_html=True)
         
@@ -509,7 +491,7 @@ with tab3:
             rsi_color = "red" if latest_data['RSI'] > 70 else "green" if latest_data['RSI'] < 30 else "black"
             st.markdown(f"""
             <div class="stock-metrics">
-                <h3>Chỉ Báo Động Lượng</h3>
+                <h3>Momentum Indicators</h3>
                 <p>RSI: <span style="color: {rsi_color}; font-weight: bold;">{latest_data['RSI']:.2f}</span></p>
                 <p>MACD: {latest_data['MACD']:.2f}</p>
                 <p>MACD Signal: {latest_data['MACD_Signal']:.2f}</p>
@@ -518,30 +500,30 @@ with tab3:
             """, unsafe_allow_html=True)
         
         with col3:
-            bb_color = "red" if latest_bb_position == 'Trên dải trên' else "green" if latest_bb_position == 'Dưới dải dưới' else "black"
+            bb_color = "red" if latest_bb_position == 'Above upper band' else "green" if latest_bb_position == 'Below lower band' else "black"
             st.markdown(f"""
             <div class="stock-metrics">
-                <h3>Phân Tích Bollinger Bands</h3>
-                <p>Vị trí: <span style="color: {bb_color}; font-weight: bold;">{latest_bb_position}</span></p>
+                <h3>Bollinger Bands Analysis</h3>
+                <p>Position: <span style="color: {bb_color}; font-weight: bold;">{latest_bb_position}</span></p>
                 <p>BB Width: {(latest_data['BB_High'] - latest_data['BB_Low'])/latest_data['BB_Mid']*100:.2f}%</p>
-                <p>Khoảng cách từ giá: {abs(latest_data['Close'] - latest_data['BB_Mid'])/latest_data['BB_Mid']*100:.2f}%</p>
+                <p>Price Distance: {abs(latest_data['Close'] - latest_data['BB_Mid'])/latest_data['BB_Mid']*100:.2f}%</p>
             </div>
             """, unsafe_allow_html=True)
 
-        st.subheader("Phân Tích Xu Hướng Giá và Khối Lượng")
+        st.subheader("Price Trend and Volume Analysis")
         
         fig = make_subplots(rows=3, cols=1, 
                            shared_xaxes=True,
                            vertical_spacing=0.05,
                            row_heights=[0.5, 0.25, 0.25],
-                           subplot_titles=("Giá & Xu Hướng", "Khối Lượng", "Momentum"))
+                           subplot_titles=("Price & Trend", "Volume", "Momentum"))
 
         fig.add_trace(go.Candlestick(x=technical_data['time'],
                                     open=technical_data['Open'],
                                     high=technical_data['High'],
                                     low=technical_data['Low'],
                                     close=technical_data['Close'],
-                                    name="Giá"), row=1, col=1)
+                                    name="Price"), row=1, col=1)
         
         fig.add_trace(go.Scatter(x=technical_data['time'], 
                                 y=technical_data['SMA_20'],
@@ -569,7 +551,7 @@ with tab3:
         colors = ['green' if x >= 0 else 'red' for x in technical_data['Price_Change']]
         fig.add_trace(go.Bar(x=technical_data['time'],
                             y=technical_data['Volume'],
-                            name="Khối lượng",
+                            name="Volume",
                             marker_color=colors), row=2, col=1)
 
         fig.add_trace(go.Scatter(x=technical_data['time'],
@@ -582,11 +564,11 @@ with tab3:
 
         fig.update_layout(height=800,
                          showlegend=True,
-                         title_text=f"Phân Tích Kỹ Thuật Chi Tiết - {selected_stock}")
+                         title_text=f"Detailed Technical Analysis - {selected_stock}")
         
         st.plotly_chart(fig, use_container_width=True)
 
-        st.subheader("Phân Tích Xu Hướng Theo Thời Gian")
+        st.subheader("Time-based Trend Analysis")
         
         periods = [5, 10, 20, 50]
         trend_data = {}
@@ -594,9 +576,9 @@ with tab3:
         for period in periods:
             changes = technical_data['Close'].pct_change(period) * 100
             if not changes.empty:
-                trend_data[f'Thay đổi {period} phiên'] = changes.iloc[-1]
+                trend_data[f'{period}-period Change'] = changes.iloc[-1]
             else:
-                trend_data[f'Thay đổi {period} phiên'] = 0
+                trend_data[f'{period}-period Change'] = 0
             
         col1, col2 = st.columns(2)
         
@@ -608,37 +590,37 @@ with tab3:
                 if not changes.empty:
                     fig.add_trace(go.Scatter(x=technical_data['time'],
                                            y=changes,
-                                           name=f'Thay đổi {period} phiên',
+                                           name=f'{period}-period Change',
                                            line=dict(width=1)))
             
-            fig.update_layout(title=f"Xu Hướng Theo Thời Gian - {selected_stock}",
-                            yaxis_title="Thay đổi (%)",
+            fig.update_layout(title=f"Time-based Trend - {selected_stock}",
+                            yaxis_title="Change (%)",
                             height=400)
             
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
             trend_summary = pd.DataFrame({
-                'Chỉ số': [
-                    'Xu hướng ngắn hạn (5 phiên)',
-                    'Xu hướng trung hạn (20 phiên)',
-                    'Xu hướng dài hạn (50 phiên)',
-                    'Độ biến động (ATR)',
+                'Indicator': [
+                    'Short-term Trend (5P)',
+                    'Medium-term Trend (20P)',
+                    'Long-term Trend (50P)',
+                    'Volatility (ATR)',
                     'Momentum (RSI)',
-                    'Xu hướng MACD'
+                    'MACD Trend'
                 ],
-                'Trạng thái': [
-                    'Tăng' if trend_data['Thay đổi 5 phiên'] > 0 else 'Giảm',
-                    'Tăng' if trend_data['Thay đổi 20 phiên'] > 0 else 'Giảm',
-                    'Tăng' if trend_data['Thay đổi 50 phiên'] > 0 else 'Giảm',
+                'Status': [
+                    'Up' if trend_data['5-period Change'] > 0 else 'Down',
+                    'Up' if trend_data['20-period Change'] > 0 else 'Down',
+                    'Up' if trend_data['50-period Change'] > 0 else 'Down',
                     f"{latest_data['ATR']:.2f} ({(latest_data['ATR']/latest_data['Close']*100):.2f}%)",
                     latest_rsi_signal,
-                    'Tăng' if latest_data['MACD'] > latest_data['MACD_Signal'] else 'Giảm'
+                    'Up' if latest_data['MACD'] > latest_data['MACD_Signal'] else 'Down'
                 ],
-                'Giá trị': [
-                    f"{trend_data['Thay đổi 5 phiên']:.2f}%",
-                    f"{trend_data['Thay đổi 20 phiên']:.2f}%",
-                    f"{trend_data['Thay đổi 50 phiên']:.2f}%",
+                'Value': [
+                    f"{trend_data['5-period Change']:.2f}%",
+                    f"{trend_data['20-period Change']:.2f}%",
+                    f"{trend_data['50-period Change']:.2f}%",
                     f"{latest_data['Close']:.2f}",
                     f"{latest_data['RSI']:.2f}",
                     f"{latest_data['MACD']:.2f}"
@@ -647,27 +629,27 @@ with tab3:
             
             st.dataframe(trend_summary,
                         column_config={
-                            "Chỉ số": st.column_config.TextColumn("Chỉ số"),
-                            "Trạng thái": st.column_config.TextColumn("Trạng thái"),
-                            "Giá trị": st.column_config.TextColumn("Giá trị")
+                            "Indicator": st.column_config.TextColumn("Indicator"),
+                            "Status": st.column_config.TextColumn("Status"),
+                            "Value": st.column_config.TextColumn("Value")
                         },
                         hide_index=True)
 
 with tab4:
-    st.header("Phân Tích Tổng Hợp")
+    st.header("Comprehensive Analysis")
     
     if technical_data is not None and trading_stats is not None:
-        st.subheader("Thống Kê Giao Dịch")
+        st.subheader("Trading Statistics")
         
         col1, col2 = st.columns(2)
         
         with col1:
             st.markdown("""
             <div class="stock-metrics">
-                <h3>Thống Kê Giá</h3>
-                <p>Cao nhất 52 tuần: {}</p>
-                <p>Thấp nhất 52 tuần: {}</p>
-                <p>% Thay đổi từ đáy: {:.2f}%</p>
+                <h3>Price Statistics</h3>
+                <p>52-Week High: {}</p>
+                <p>52-Week Low: {}</p>
+                <p>% Change from Low: {:.2f}%</p>
             </div>
             """.format(
                 format_price(trading_stats.iloc[0]['high_price_1y']),
@@ -678,10 +660,10 @@ with tab4:
         with col2:
             st.markdown("""
             <div class="stock-metrics">
-                <h3>Thống Kê Khối Ngoại</h3>
-                <p>Room NN còn lại: {:,.0f}</p>
-                <p>Tỷ lệ sở hữu: {:.2f}%</p>
-                <p>KLGD NN: {:,.0f}</p>
+                <h3>Foreign Statistics</h3>
+                <p>Foreign Room: {:,.0f}</p>
+                <p>Ownership: {:.2f}%</p>
+                <p>Foreign Volume: {:,.0f}</p>
             </div>
             """.format(
                 trading_stats.iloc[0]['foreign_room'],
@@ -689,18 +671,18 @@ with tab4:
                 trading_stats.iloc[0]['foreign_volume']
             ), unsafe_allow_html=True)
         
-        st.subheader("Phân Tích Kỹ Thuật Tổng Hợp")
+        st.subheader("Technical Analysis Summary")
         
         signals = pd.DataFrame(index=technical_data.index)
-        signals['Signal'] = 'Giữ'
+        signals['Signal'] = 'Hold'
         
-        signals.loc[technical_data['RSI'] > 70, 'Signal'] = 'Bán'
-        signals.loc[technical_data['RSI'] < 30, 'Signal'] = 'Mua'
+        signals.loc[technical_data['RSI'] > 70, 'Signal'] = 'Sell'
+        signals.loc[technical_data['RSI'] < 30, 'Signal'] = 'Buy'
         
         signals.loc[(technical_data['MACD'] > technical_data['MACD_Signal']) & 
-                   (technical_data['MACD'].shift(1) <= technical_data['MACD_Signal'].shift(1)), 'Signal'] = 'Mua'
+                   (technical_data['MACD'].shift(1) <= technical_data['MACD_Signal'].shift(1)), 'Signal'] = 'Buy'
         signals.loc[(technical_data['MACD'] < technical_data['MACD_Signal']) & 
-                   (technical_data['MACD'].shift(1) >= technical_data['MACD_Signal'].shift(1)), 'Signal'] = 'Bán'
+                   (technical_data['MACD'].shift(1) >= technical_data['MACD_Signal'].shift(1)), 'Signal'] = 'Sell'
         
         fig = go.Figure()
         
@@ -721,15 +703,15 @@ with tab4:
                                 name="SMA50",
                                 line=dict(color='orange')))
         
-        buy_signals = signals[signals['Signal'] == 'Mua']
-        sell_signals = signals[signals['Signal'] == 'Bán']
+        buy_signals = signals[signals['Signal'] == 'Buy']
+        sell_signals = signals[signals['Signal'] == 'Sell']
         
         fig.add_trace(go.Scatter(
             x=technical_data.loc[buy_signals.index, 'time'],
             y=technical_data.loc[buy_signals.index, 'Low'] * 0.99,
             mode='markers',
             marker=dict(symbol='triangle-up', size=15, color='green'),
-            name='Tín hiệu Mua'
+            name='Buy Signal'
         ))
         
         fig.add_trace(go.Scatter(
@@ -737,19 +719,19 @@ with tab4:
             y=technical_data.loc[sell_signals.index, 'High'] * 1.01,
             mode='markers',
             marker=dict(symbol='triangle-down', size=15, color='red'),
-            name='Tín hiệu Bán'
+            name='Sell Signal'
         ))
         
         fig.update_layout(
-            title=f"{selected_stock} - Phân Tích Kỹ Thuật Tổng Hợp",
-            yaxis_title="Giá",
+            title=f"{selected_stock} - Technical Analysis Summary",
+            yaxis_title="Price",
             height=600
         )
         
         st.plotly_chart(fig, use_container_width=True)
 
 with tab5:
-    st.header("Thông Tin Công Ty & Tin Tức")
+    st.header("Company Information & News")
     
     def load_company_data(symbol):
         try:
@@ -759,27 +741,27 @@ with tab5:
             if overview_path.exists():
                 data['overview'] = pd.read_csv(overview_path)
             else:
-                st.error(f"Không tìm thấy file thông tin tổng quan: {overview_path}")
+                st.error(f"Company overview file not found: {overview_path}")
                 return None
             
             shareholders_path = COLLECTED_DATA_DIR / "company" / f"{symbol}_shareholders.csv"
             if shareholders_path.exists():
                 data['shareholders'] = pd.read_csv(shareholders_path)
             else:
-                st.warning(f"Không tìm thấy file thông tin cổ đông: {shareholders_path}")
+                st.warning(f"Shareholders information file not found: {shareholders_path}")
                 data['shareholders'] = pd.DataFrame()
             
             officers_path = COLLECTED_DATA_DIR / "company" / f"{symbol}_officers_working.csv"
             if officers_path.exists():
                 data['officers'] = pd.read_csv(officers_path)
             else:
-                st.warning(f"Không tìm thấy file thông tin ban lãnh đạo: {officers_path}")
+                st.warning(f"Officers information file not found: {officers_path}")
                 data['officers'] = pd.DataFrame()
             
             return data
             
         except Exception as e:
-            st.error(f"Lỗi khi đọc dữ liệu công ty: {str(e)}")
+            st.error(f"Error reading company data: {str(e)}")
             return None
 
     def load_news_data(symbol):
@@ -790,20 +772,20 @@ with tab5:
             if news_path.exists():
                 data['news'] = pd.read_csv(news_path)
             else:
-                st.warning(f"Không tìm thấy file tin tức: {news_path}")
+                st.warning(f"News file not found: {news_path}")
                 data['news'] = pd.DataFrame()
             
             events_path = COLLECTED_DATA_DIR / "news" / f"{symbol}_events.csv"
             if events_path.exists():
                 data['events'] = pd.read_csv(events_path)
             else:
-                st.warning(f"Không tìm thấy file sự kiện: {events_path}")
+                st.warning(f"Events file not found: {events_path}")
                 data['events'] = pd.DataFrame()
             
             return data
             
         except Exception as e:
-            st.error(f"Lỗi khi đọc dữ liệu tin tức: {str(e)}")
+            st.error(f"Error reading news data: {str(e)}")
             return None
 
     company_data = load_company_data(selected_stock)
@@ -819,46 +801,46 @@ with tab5:
             st.markdown(f"""
             ### {selected_stock} - {overview['icb_name3']}
             
-            **Lịch sử phát triển:**
+            **Development History:**
             {overview['history']}
             
-            **Giới thiệu công ty:**
+            **Company Profile:**
             {overview['company_profile']}
             """)
         
         with col2:
             st.markdown(f"""
-            ### Thông Tin Cơ Bản
-            - **Vốn điều lệ:** {int(overview['charter_capital']):,} VND
-            - **Số lượng CP:** {int(overview['issue_share']):,}
-            - **Ngành:** {overview['icb_name3']}
+            ### Basic Information
+            - **Charter Capital:** {int(overview['charter_capital']):,} VND
+            - **Outstanding Shares:** {int(overview['issue_share']):,}
+            - **Industry:** {overview['icb_name3']}
             """)
 
         if 'shareholders' in company_data and not company_data['shareholders'].empty:
-            st.subheader("Cơ Cấu Cổ Đông")
+            st.subheader("Shareholder Structure")
             shareholders = company_data['shareholders']
             
             fig = px.pie(shareholders, 
                         values='share_own_percent', 
                         names='share_holder',
-                        title=f"Cơ Cấu Cổ Đông {selected_stock}")
+                        title=f"{selected_stock} Shareholder Structure")
             st.plotly_chart(fig, use_container_width=True)
 
         if 'officers' in company_data and not company_data['officers'].empty:
-            st.subheader("Ban Lãnh Đạo")
+            st.subheader("Board of Directors")
             officers = company_data['officers']
             st.dataframe(
                 officers[['officer_name', 'officer_position', 'quantity']],
                 column_config={
-                    "officer_name": "Họ và Tên",
-                    "officer_position": "Chức Vụ",
-                    "quantity": "Số Lượng CP Sở Hữu"
+                    "officer_name": "Name",
+                    "officer_position": "Position",
+                    "quantity": "Shares Owned"
                 },
                 hide_index=True
             )
 
     if news_data:
-        st.subheader("Tin Tức & Sự Kiện")
+        st.subheader("News & Events")
         
         timeline_data = []
         
@@ -866,9 +848,9 @@ with tab5:
             news = news_data['news']
             for _, row in news.iterrows():
                 timeline_data.append({
-                    'Ngày': pd.to_datetime(row['public_date']),
-                    'Nội Dung': row['news_title'],
-                    'Loại': 'Tin Tức',
+                    'Date': pd.to_datetime(row['public_date']),
+                    'Content': row['news_title'],
+                    'Type': 'News',
                     'Link': row['news_source_link']
                 })
         
@@ -876,22 +858,22 @@ with tab5:
             events = news_data['events']
             for _, row in events.iterrows():
                 timeline_data.append({
-                    'Ngày': pd.to_datetime(row['public_date']),
-                    'Nội Dung': row['event_title'],
-                    'Loại': 'Sự Kiện',
+                    'Date': pd.to_datetime(row['public_date']),
+                    'Content': row['event_title'],
+                    'Type': 'Event',
                     'Link': row['source_url'] if pd.notna(row['source_url']) else ''
                 })
         
         if timeline_data:
             timeline_df = pd.DataFrame(timeline_data)
-            timeline_df = timeline_df.sort_values('Ngày', ascending=False)
+            timeline_df = timeline_df.sort_values('Date', ascending=False)
             
             for _, row in timeline_df.head(10).iterrows():
-                with st.expander(f"{row['Ngày'].strftime('%d/%m/%Y')} - {row['Nội Dung']}", expanded=False):
+                with st.expander(f"{row['Date'].strftime('%d/%m/%Y')} - {row['Content']}", expanded=False):
                     st.markdown(f"""
-                    **Loại:** {row['Loại']}
+                    **Type:** {row['Type']}
                     
-                    **Link:** [{row['Nội Dung']}]({row['Link']})
+                    **Link:** [{row['Content']}]({row['Link']})
                     """)
     else:
-        st.warning("Không thể tải dữ liệu tin tức. Vui lòng kiểm tra lại đường dẫn và dữ liệu.")
+        st.warning("Unable to load news data. Please check the data path and files.")

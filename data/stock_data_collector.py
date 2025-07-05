@@ -1,3 +1,4 @@
+# Author: Vu Dang Khoa
 from vnstock import Vnstock
 from vnstock.explorer.vci import Company, Trading, Quote
 import pandas as pd
@@ -13,194 +14,195 @@ import re
 from typing import List, Dict, Optional
 import os
 
-logging.basicConfig(
-    filename='stock_collector.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-
 class RateLimiter:
     def __init__(self, calls_per_minute=15):
         self.calls_per_minute = calls_per_minute
         self.calls = []
-        self.waiting = False
-        self.min_wait_time = 5
-        self.error_wait_multiplier = 1.5
-    def wait_if_needed(self):
+        self.min_wait = 5
+        self.error_mult = 1.5
+
+    def wait(self):
         now = datetime.now()
-        self.calls = [call_time for call_time in self.calls 
-                     if (now - call_time).total_seconds() < 60]
+        self.calls = [t for t in self.calls if (now - t).total_seconds() < 60]
+        
         if self.calls:
-            last_call_wait = (now - self.calls[-1]).total_seconds()
-            if last_call_wait < self.min_wait_time:
-                time.sleep(self.min_wait_time - last_call_wait)
+            last_wait = (now - self.calls[-1]).total_seconds()
+            if last_wait < self.min_wait:
+                time.sleep(self.min_wait - last_wait)
+                
         if len(self.calls) >= self.calls_per_minute:
-            wait_time = 65 - (now - self.calls[0]).total_seconds()
-            if wait_time > 0:
-                logging.info(f"Đợi {wait_time:.1f} giây do rate limit...")
-                time.sleep(wait_time)
+            wait = 65 - (now - self.calls[0]).total_seconds()
+            if wait > 0:
+                time.sleep(wait)
                 self.calls = []
-        self.calls.append(datetime.now())
-    def handle_rate_limit_error(self, error_message, retry_count):
-        match = re.search(r'sau (\d+) giây', error_message)
-        if match:
-            wait_time = int(match.group(1))
-            adjusted_wait = wait_time * (self.error_wait_multiplier ** retry_count)
-            logging.info(f"Rate limit exceeded. Đợi {adjusted_wait:.1f} giây...")
-            time.sleep(adjusted_wait)
-            self.calls = []
-            return True
-        return False
+                
+        self.calls.append(now)
+
+    def handle_error(self, msg, retry):
+        match = re.search(r'sau (\d+) giây', msg)
+        if not match:
+            return False
+            
+        wait = int(match.group(1))
+        adj_wait = wait * (self.error_mult ** retry)
+        time.sleep(adj_wait)
+        self.calls = []
+        return True
 
 class StockDataCollector:
     def __init__(self, output_dir: str = "collected_data"):
-        self.setup_logging()
-        self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True)
-        self.intraday_dir = self.output_dir / "intraday"
-        self.market_data_dir = self.output_dir / "market_data"
-        self.trading_stats_dir = self.output_dir / "trading_stats"
-        self.daily_dir = self.output_dir / "daily"
-        for dir_path in [
-            self.intraday_dir, 
-            self.market_data_dir, 
-            self.trading_stats_dir,
-            self.daily_dir
-        ]:
-            dir_path.mkdir(exist_ok=True)
+        self._setup_logging()
+        self._init_dirs(output_dir)
         self.trading = Trading()
-        self.config_file = self.output_dir / "collector_config.json"
-        self.symbols = self.load_config().get("symbols", ["VCB", "VNM", "FPT"])
-    def setup_logging(self):
+        self.symbols = self._load_config().get("symbols", ["VCB", "VNM", "FPT"])
+
+    def _setup_logging(self):
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
-    def load_config(self) -> Dict:
-        if self.config_file.exists():
-            with open(self.config_file, 'r') as f:
-                return json.load(f)
-        return {}
-    def save_config(self):
+
+    def _init_dirs(self, output_dir):
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(exist_ok=True)
+        
+        self.intraday_dir = self.output_dir / "intraday"
+        self.market_dir = self.output_dir / "market_data" 
+        self.stats_dir = self.output_dir / "trading_stats"
+        self.daily_dir = self.output_dir / "daily"
+        
+        for d in [self.intraday_dir, self.market_dir, self.stats_dir, self.daily_dir]:
+            d.mkdir(exist_ok=True)
+            
+        self.config_file = self.output_dir / "collector_config.json"
+
+    def _load_config(self) -> Dict:
+        if not self.config_file.exists():
+            return {}
+        with open(self.config_file) as f:
+            return json.load(f)
+
+    def _save_config(self):
         config = {
             "symbols": self.symbols,
             "last_updated": datetime.now().isoformat()
         }
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             json.dump(config, f, indent=4)
-    def is_trading_hours(self) -> bool:
+
+    def _is_trading_time(self) -> bool:
         now = datetime.now().time()
-        morning_session = dt_time(9, 15) <= now <= dt_time(11, 30)
-        afternoon_session = dt_time(13, 0) <= now <= dt_time(14, 45)
-        return morning_session or afternoon_session
-    def collect_daily_data(self, symbol: str) -> Optional[pd.DataFrame]:
+        morning = dt_time(9, 15) <= now <= dt_time(11, 30)
+        afternoon = dt_time(13, 0) <= now <= dt_time(14, 45)
+        return morning or afternoon
+
+    def get_daily_data(self, symbol: str) -> Optional[pd.DataFrame]:
         try:
-            logging.info(f"Đang thu thập dữ liệu ngày cho {symbol}...")
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=365)
+            end = datetime.now()
+            start = end - timedelta(days=365)
+            
             quote = Quote(symbol)
-            daily_data = quote.history(
-                start_date=start_date.strftime('%Y-%m-%d'),
-                end_date=end_date.strftime('%Y-%m-%d'),
+            data = quote.history(
+                start_date=start.strftime('%Y-%m-%d'),
+                end_date=end.strftime('%Y-%m-%d'),
                 interval='1D'
             )
-            if daily_data is not None and not daily_data.empty:
-                current_date = datetime.now().strftime("%Y%m%d")
-                file_path = self.daily_dir / f"{symbol}_daily_{current_date}.csv"
-                daily_data.to_csv(file_path, index=True)
-                logging.info(f"Đã lưu dữ liệu ngày vào {file_path}")
-                return daily_data
-            logging.warning(f"Không có dữ liệu ngày cho {symbol}")
-            return None
-        except Exception as e:
-            logging.error(f"Lỗi khi thu thập dữ liệu ngày cho {symbol}: {str(e)}")
-            return None
-    def collect_intraday_data(self, symbol: str) -> Optional[pd.DataFrame]:
-        try:
-            if not self.is_trading_hours():
-                logging.warning(
-                    "Ngoài giờ giao dịch. Dữ liệu intraday chỉ khả dụng trong các khung giờ:\n"
-                    "- Sáng: 9:15 - 11:30\n"
-                    "- Chiều: 13:00 - 14:45"
-                )
+            
+            if data is None or data.empty:
                 return None
-            logging.info(f"Đang thu thập dữ liệu intraday cho {symbol}...")
+                
+            date = datetime.now().strftime("%Y%m%d")
+            path = self.daily_dir / f"{symbol}_daily_{date}.csv"
+            data.to_csv(path, index=True)
+            return data
+            
+        except Exception as e:
+            logging.error(f"Failed to get daily data for {symbol}: {e}")
+            return None
+
+    def get_intraday_data(self, symbol: str) -> Optional[pd.DataFrame]:
+        if not self._is_trading_time():
+            return None
+            
+        try:
             quote = Quote(symbol)
-            intraday_data = quote.intraday(page_size=10000)
-            if intraday_data is not None and not intraday_data.empty:
-                current_date = datetime.now().strftime("%Y%m%d")
-                file_path = self.intraday_dir / f"{symbol}_intraday_{current_date}.csv"
-                intraday_data.to_csv(file_path, index=True)
-                logging.info(f"Đã lưu dữ liệu intraday vào {file_path}")
-                logging.info(f"\nThông tin dữ liệu intraday {symbol}:")
-                logging.info(f"Số lượng records: {len(intraday_data)}")
-                return intraday_data
-            logging.warning(f"Không có dữ liệu intraday cho {symbol}")
-            return None
+            data = quote.intraday(page_size=10000)
+            
+            if data is None or data.empty:
+                return None
+                
+            date = datetime.now().strftime("%Y%m%d")
+            path = self.intraday_dir / f"{symbol}_intraday_{date}.csv"
+            data.to_csv(path, index=True)
+            return data
+            
         except Exception as e:
-            if "chuẩn bị phiên mới" in str(e):
-                logging.error(
-                    "Dữ liệu intraday không khả dụng ngoài giờ giao dịch.\n"
-                    "Giờ giao dịch:\n"
-                    "- Sáng: 9:15 - 11:30\n"
-                    "- Chiều: 13:00 - 14:45"
-                )
-            else:
-                logging.error(f"Lỗi khi thu thập dữ liệu intraday cho {symbol}: {str(e)}")
+            logging.error(f"Failed to get intraday data for {symbol}: {e}")
             return None
-    def collect_market_data(self) -> Optional[pd.DataFrame]:
+
+    def get_market_data(self) -> Optional[pd.DataFrame]:
         try:
-            logging.info("Đang thu thập dữ liệu bảng giá...")
-            price_board = self.trading.price_board(self.symbols)
-            if price_board is not None and not price_board.empty:
-                current_date = datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_path = self.market_data_dir / f"price_board_{current_date}.csv"
-                price_board.to_csv(file_path, index=True)
-                logging.info(f"Đã lưu bảng giá vào {file_path}")
-                return price_board
-            logging.warning("Không có dữ liệu bảng giá")
-            return None
+            data = self.trading.price_board(self.symbols)
+            
+            if data is None or data.empty:
+                return None
+                
+            date = datetime.now().strftime("%Y%m%d_%H%M%S")
+            path = self.market_dir / f"price_board_{date}.csv"
+            data.to_csv(path, index=True)
+            return data
+            
         except Exception as e:
-            logging.error(f"Lỗi khi thu thập dữ liệu bảng giá: {str(e)}")
+            logging.error(f"Failed to get market data: {e}")
             return None
-    def collect_trading_stats(self, symbol: str) -> Optional[pd.DataFrame]:
+
+    def get_trading_stats(self, symbol: str) -> Optional[pd.DataFrame]:
         try:
-            logging.info(f"Đang thu thập thống kê giao dịch cho {symbol}...")
             company = Company(symbol)
-            trading_stats = company.trading_stats()
-            if trading_stats is not None and not trading_stats.empty:
-                current_date = datetime.now().strftime("%Y%m%d")
-                file_path = self.trading_stats_dir / f"{symbol}_trading_stats_{current_date}.csv"
-                trading_stats.to_csv(file_path, index=True)
-                logging.info(f"Đã lưu thống kê giao dịch vào {file_path}")
-                return trading_stats
-            logging.warning(f"Không có dữ liệu thống kê giao dịch cho {symbol}")
-            return None
+            stats = company.trading_stats()
+            
+            if stats is None or stats.empty:
+                return None
+                
+            date = datetime.now().strftime("%Y%m%d")
+            path = self.stats_dir / f"{symbol}_trading_stats_{date}.csv"
+            stats.to_csv(path, index=True)
+            return stats
+            
         except Exception as e:
-            logging.error(f"Lỗi khi thu thập thống kê giao dịch cho {symbol}: {str(e)}")
+            logging.error(f"Failed to get trading stats for {symbol}: {e}")
             return None
-    def collect_all_data(self):
-        for symbol in self.symbols:
-            self.collect_daily_data(symbol)
+
+    def collect_all(self):
+        for sym in self.symbols:
+            self.get_daily_data(sym)
             time.sleep(5)
-        for symbol in self.symbols:
-            self.collect_intraday_data(symbol)
+            
+        for sym in self.symbols:
+            self.get_intraday_data(sym)
             time.sleep(5)
-        self.collect_market_data()
+            
+        self.get_market_data()
         time.sleep(5)
-        for symbol in self.symbols:
-            self.collect_trading_stats(symbol)
+        
+        for sym in self.symbols:
+            self.get_trading_stats(sym)
             time.sleep(5)
-    def add_symbols(self, new_symbols: List[str]):
-        self.symbols.extend([s for s in new_symbols if s not in self.symbols])
-        self.save_config()
-    def remove_symbols(self, symbols_to_remove: List[str]):
-        self.symbols = [s for s in self.symbols if s not in symbols_to_remove]
-        self.save_config()
+
+    def add_symbols(self, new_syms: List[str]):
+        self.symbols.extend([s for s in new_syms if s not in self.symbols])
+        self._save_config()
+
+    def remove_symbols(self, syms: List[str]):
+        self.symbols = [s for s in self.symbols if s not in syms]
+        self._save_config()
+
     def get_symbols(self) -> List[str]:
         return self.symbols.copy()
+
 def main():
     collector = StockDataCollector()
-    collector.collect_all_data()
+    collector.collect_all()
+
 if __name__ == "__main__":
     main()
