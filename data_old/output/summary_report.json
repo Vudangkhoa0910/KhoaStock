@@ -1,0 +1,77 @@
+{
+    "trading_recommendations": {
+        "VCB": {
+            "action": "Sell",
+            "confidence": 0.49,
+            "signal_strength": 2,
+            "key_factors": {
+                "technical": {
+                    "trend": "Downtrend",
+                    "rsi": 44.0
+                },
+                "fundamental": {
+                    "revenue_growth": 0.0114,
+                    "roe": null
+                },
+                "sentiment": "Negative"
+            }
+        },
+        "VNM": {
+            "action": "Strong Sell",
+            "confidence": 0.43,
+            "signal_strength": 0,
+            "key_factors": {
+                "technical": {
+                    "trend": "Downtrend",
+                    "rsi": 28.89
+                },
+                "fundamental": {
+                    "revenue_growth": -0.0296,
+                    "roe": null
+                },
+                "sentiment": "Negative"
+            }
+        },
+        "FPT": {
+            "action": "Sell",
+            "confidence": 0.51,
+            "signal_strength": 2,
+            "key_factors": {
+                "technical": {
+                    "trend": "Downtrend",
+                    "rsi": 42.74
+                },
+                "fundamental": {
+                    "revenue_growth": -0.0071,
+                    "roe": null
+                },
+                "sentiment": "Negative"
+            }
+        }
+    },
+    "model_performance": {
+        "VCB": {
+            "accuracy": 0.71,
+            "precision": 0.5,
+            "recall": 0.71,
+            "f1": 0.59
+        },
+        "VNM": {
+            "accuracy": 0.63,
+            "precision": 0.4,
+            "recall": 0.63,
+            "f1": 0.49
+        },
+        "FPT": {
+            "accuracy": 0.46,
+            "precision": 0.21,
+            "recall": 0.46,
+            "f1": 0.29
+        }
+    },
+    "market_outlook": {
+        "overall_sentiment": 0,
+        "risk_level": "Medium",
+        "market_trend": "Sideways"
+    }
+}

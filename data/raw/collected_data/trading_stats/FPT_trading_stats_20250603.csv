@@ -1,0 +1,2 @@
+,symbol,exchange,ev,ceiling,floor,ref_price,open,match_price,close_price,price_change,price_change_pct,high,low,total_volume,high_price_1y,low_price_1y,pct_low_change_1y,pct_high_change_1y,foreign_volume,foreign_room,avg_match_volume_2w,foreign_holding_room,current_holding_ratio,max_holding_ratio
+0,FPT,HOSE,170791132146300,124600,108400,116500,116500,116100,116100,-400,-0.00343348,117100,115600,4587470,156000,97800,0.1046622265,-0.2475696695,937804,720823899,4823323,604634109,0.41101677336952275,0.49

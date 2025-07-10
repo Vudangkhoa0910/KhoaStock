@@ -25,7 +25,7 @@ graph TB
 ## 1. Data Collection
 
 ### Tools & Libraries
-- Main tool: `data/stock_data_collector.py` 
+- Main tool: `src/data_collection/stock_collector.py` 
 - Uses `vnstock` API for automated data collection
 - Dependencies: Install required packages from `requirements.txt`
 
@@ -56,7 +56,7 @@ graph TB
    pip install -r requirements.txt
    ```
 
-2. Configure data collection settings in `data/stock_data_collector.py`:
+2. Configure data collection settings in `src/data_collection/stock_collector.py`:
    ```python
    SYMBOLS = ['VCB', 'VNM', 'FPT']  # Add/modify stock symbols
    DATE_RANGE = 365  # Number of days to collect
@@ -64,11 +64,11 @@ graph TB
 
 3. Run the collector:
    ```bash
-   python data/stock_data_collector.py
+   python src/data_collection/stock_collector.py
    ```
 
 4. Check collected data:
-   - Data is stored in `data/collected_data/`
+   - Data is stored in `data/raw/`
    - Organized by data type and stock symbol
    - CSV format with consistent structure
 
@@ -94,7 +94,7 @@ graph TB
 ### Tools & Scripts
 1. **Data Analysis:**
    ```bash
-   python data/analysis/data_type_analyzer.py
+   python src/data_processing/data_analyzer.py
    ```
    - Analyzes data types
    - Checks data quality
@@ -102,7 +102,7 @@ graph TB
 
 2. **Feature Generation:**
    ```bash
-   python data/analysis/enhanced_predictor.py
+   python src/data_processing/enhanced_predictor.py
    ```
    - Generates technical features
    - Creates sentiment features
@@ -147,15 +147,15 @@ graph TB
 
 ### Model Architecture
 1. **Main Model:**
-   - File: `optimized_short_term_model.py`
+   - File: `src/models/optimized_short_term_model.py`
    - Type: Optimized linear ensemble
    - Purpose: Short-term prediction (1-3 days)
    - Features: Technical, patterns, momentum
 
 2. **Comparison Models:**
-   - `lightweight_prediction_model.py`
-   - `ultra_light_prediction_model.py`
-   - `pure_python_prediction_model.py`
+   - `src/models/lightweight_prediction_model.py`
+   - `src/models/ultra_light_prediction_model.py`
+   - `src/models/pure_python_prediction_model.py`
 
 ### Training Process
 1. **Data Preparation:**
@@ -168,14 +168,14 @@ graph TB
 
 2. **Model Training:**
    ```bash
-   python optimized_short_term_model.py --train
+   python src/models/optimized_short_term_model.py --train
    ```
    - Trains model on historical data
    - Optimizes parameters
    - Validates performance
 
 3. **Model Saving:**
-   - Models saved in `saved_models/`
+   - Models saved in `outputs/models/`
    - JSON format with weights & parameters
    - Portable for deployment
 
@@ -190,14 +190,14 @@ graph TB
 
 2. **Visualization:**
    ```bash
-   python plot_results.py
+   python src/visualization/plot_results.py
    ```
    - Generates performance charts
    - Creates comparison plots
-   - Saves results in `latex_figures/`
+   - Saves results in `outputs/figures/`
 
 3. **Detailed Results:**
-   - Stored in `latex_figures/comprehensive_results.json`
+   - Stored in `outputs/results/comprehensive_results.json`
    - CSV files for detailed analysis
    - Performance by stock and horizon
 
@@ -206,7 +206,7 @@ graph TB
 ### Interactive Dashboard
 1. **Launch Dashboard:**
    ```bash
-   streamlit run data/stock_dashboard.py
+   streamlit run src/visualization/stock_dashboard.py
    ```
 
 2. **Features:**
@@ -257,36 +257,71 @@ pip install -r requirements.txt
 
 ### 2. Complete Pipeline Execution
 ```bash
+# Option 1: Use the main script (Recommended)
+python main.py
+
+# Option 2: Run individual steps
 # 1. Collect data
-python data/stock_data_collector.py
+python src/data_collection/stock_collector.py
 
 # 2. Process and analyze data
-python data/analysis/data_type_analyzer.py
-python data/analysis/enhanced_predictor.py
+python src/data_processing/data_analyzer.py
+python src/data_processing/enhanced_predictor.py
 
 # 3. Train model
-python optimized_short_term_model.py --train
+python src/models/optimized_short_term_model.py --train
 
 # 4. Evaluate and visualize results
-python plot_results.py
+python src/visualization/plot_results.py
 
 # 5. Launch dashboard
-streamlit run data/stock_dashboard.py
+streamlit run src/visualization/stock_dashboard.py
 ```
 
 ## Project Structure
 
 ```
 KhoaStock/
-├── data/
-│   ├── collected_data/      # Raw collected data
-│   ├── analysis/           # Analysis scripts
-│   └── stock_dashboard.py  # Streamlit dashboard
-├── saved_models/          # Trained model files
-├── latex_figures/         # Results and visualizations
-├── optimized_short_term_model.py
-├── plot_results.py
-└── requirements.txt
+├── 📁 src/                          # Source code
+│   ├── 📁 data_collection/          # Data collection modules
+│   │   ├── stock_collector.py       # Main data collector
+│   │   └── __init__.py
+│   ├── 📁 data_processing/          # Data processing & analysis
+│   │   ├── data_analyzer.py         # Data type analysis
+│   │   ├── data_explorer.py         # Data exploration
+│   │   ├── enhanced_predictor.py    # Feature engineering
+│   │   └── __init__.py
+│   ├── 📁 models/                   # Machine learning models
+│   │   ├── optimized_short_term_model.py  # Main prediction model
+│   │   ├── lightweight_prediction_model.py
+│   │   ├── pure_python_prediction_model.py
+│   │   ├── ultra_light_prediction_model.py
+│   │   └── __init__.py
+│   ├── 📁 visualization/            # Visualization & dashboard
+│   │   ├── plot_results.py          # Results plotting
+│   │   ├── result_visualizer.py     # Chart generators
+│   │   ├── stock_dashboard.py       # Streamlit dashboard
+│   │   └── __init__.py
+├── 📁 data/                         # Data storage
+│   ├── 📁 raw/                      # Raw collected data
+│   │   ├── daily/                   # Daily OHLCV data
+│   │   ├── intraday/                # Intraday data
+│   │   ├── market_data/             # Market overview
+│   │   └── trading_stats/           # Trading statistics
+│   └── 📁 processed/                # Processed data
+│       └── analysis/                # Analysis results
+├── 📁 outputs/                      # All output files
+│   ├── 📁 figures/                  # Generated charts
+│   ├── 📁 models/                   # Saved model files
+│   └── 📁 results/                  # Analysis results
+├── 📁 config/                       # Configuration files
+│   └── settings.py                  # Global settings
+├── 📁 notebooks/                    # Jupyter notebooks
+├── 📁 docs/                         # Documentation
+├── main.py                          # Main execution script
+├── setup.py                         # Package setup
+├── requirements.txt                 # Dependencies
+└── README.md                        # This file
 ```
 
 ## Contributing & Support

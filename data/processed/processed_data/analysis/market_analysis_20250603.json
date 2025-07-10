@@ -1,0 +1,150 @@
+{
+    "VCB": {
+        "price_stats": {
+            "mean": 60.573614457831326,
+            "median": 61.14,
+            "std": 2.3754077298468013,
+            "skew": 0.16819156360846046,
+            "kurtosis": 0.42805900955112897,
+            "min": 52.5,
+            "max": 67.3
+        },
+        "volume_stats": {
+            "mean_volume": 2138301.9759036144,
+            "median_volume": 1638352.0,
+            "std_volume": 1723254.4976363133,
+            "max_volume": 11887700,
+            "min_volume": 174400
+        },
+        "momentum_stats": {
+            "mean_rsi": 50.58923054697638,
+            "overbought_periods": 7,
+            "oversold_periods": 9,
+            "positive_macd_periods": 109,
+            "negative_macd_periods": 107
+        },
+        "support_resistance": {
+            "strong_support": 52.499,
+            "weak_support": 58.518,
+            "weak_resistance": 62.034,
+            "strong_resistance": 67.3,
+            "most_traded_range": "61.14 - 61.47"
+        },
+        "signal_stats": {
+            "total_signals": 249,
+            "buy_signals": 93,
+            "sell_signals": 97,
+            "neutral_signals": 59,
+            "signal_distribution": {
+                "Sell": 97,
+                "Buy": 93,
+                "Neutral": 59
+            }
+        }
+    },
+    "VNM": {
+        "price_stats": {
+            "mean": 61.48393574297189,
+            "median": 61.21,
+            "std": 4.084258995734904,
+            "skew": 0.1261881639457231,
+            "kurtosis": -0.33832561546580253,
+            "min": 50.22,
+            "max": 70.38
+        },
+        "volume_stats": {
+            "mean_volume": 3660697.7269076305,
+            "median_volume": 2910910.0,
+            "std_volume": 2604397.029432224,
+            "max_volume": 21167413,
+            "min_volume": 890720
+        },
+        "momentum_stats": {
+            "mean_rsi": 46.08043224913493,
+            "overbought_periods": 5,
+            "oversold_periods": 10,
+            "positive_macd_periods": 99,
+            "negative_macd_periods": 117
+        },
+        "support_resistance": {
+            "strong_support": 50.219,
+            "weak_support": 58.62,
+            "weak_resistance": 64.87,
+            "strong_resistance": 70.38,
+            "most_traded_range": "55.51 - 58.62"
+        },
+        "signal_stats": {
+            "total_signals": 249,
+            "buy_signals": 72,
+            "sell_signals": 94,
+            "neutral_signals": 83,
+            "signal_distribution": {
+                "Sell": 93,
+                "Neutral": 83,
+                "Buy": 72,
+                "Strong Sell": 1
+            }
+        }
+    },
+    "FPT": {
+        "price_stats": {
+            "mean": 132.294578313253,
+            "median": 132.88,
+            "std": 11.192821788972122,
+            "skew": -0.19293411485661124,
+            "kurtosis": -0.4894345233772537,
+            "min": 105.1,
+            "max": 154.3
+        },
+        "volume_stats": {
+            "mean_volume": 5301497.879518072,
+            "median_volume": 4203583.0,
+            "std_volume": 3371482.6769819935,
+            "max_volume": 21574500,
+            "min_volume": 1005400
+        },
+        "momentum_stats": {
+            "mean_rsi": 50.368464193964186,
+            "overbought_periods": 10,
+            "oversold_periods": 12,
+            "positive_macd_periods": 91,
+            "negative_macd_periods": 125
+        },
+        "support_resistance": {
+            "strong_support": 105.09899999999999,
+            "weak_support": 122.74,
+            "weak_resistance": 143.18,
+            "strong_resistance": 154.3,
+            "most_traded_range": "130.65 - 132.88"
+        },
+        "signal_stats": {
+            "total_signals": 249,
+            "buy_signals": 58,
+            "sell_signals": 117,
+            "neutral_signals": 74,
+            "signal_distribution": {
+                "Sell": 115,
+                "Neutral": 74,
+                "Buy": 58,
+                "Strong Sell": 2
+            }
+        }
+    },
+    "correlation": {
+        "VCB": {
+            "VCB": 1.0,
+            "VNM": 0.24205981027052698,
+            "FPT": 0.5506651010692318
+        },
+        "VNM": {
+            "VCB": 0.24205981027052698,
+            "VNM": 1.0,
+            "FPT": 0.30045223045174385
+        },
+        "FPT": {
+            "VCB": 0.5506651010692318,
+            "VNM": 0.30045223045174385,
+            "FPT": 1.0
+        }
+    }
+}
